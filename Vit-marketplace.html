@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIT Marketplace</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f5f5f5; color: #333; }
+    header { background: #6200ea; color: white; padding: 1rem; text-align: center; }
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background: #3700b3; color: white; }
+    nav button { background: white; color: #3700b3; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; }
+    .container { padding: 1rem; }
+    .product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .card { background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+    .card:hover { transform: scale(1.02); }
+    .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 5px; }
+    .card h3 { margin: 0.5rem 0; }
+    .modal, .auth-form { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content, .auth-box { background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 500px; }
+    .modal-content img { width: 100%; height: 200px; object-fit: cover; border-radius: 5px; }
+    .form-group { margin-bottom: 1rem; }
+    input, textarea { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; }
+    .btn-primary { background: #6200ea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; }
+    .flex { display: flex; gap: 1rem; }
+    footer { margin-top: 2rem; text-align: center; padding: 1rem; background: #eee; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>VIT Marketplace</h1>
+    <p>Buy & Sell among VITians</p>
+  </header>
+
+  <nav>
+    <span id="welcomeUser">Welcome, Guest</span>
+    <div class="flex">
+      <button onclick="openLogin()">Login</button>
+      <button onclick="openListForm()">List Product</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="product-list" id="productList">
+      <!-- Product cards will appear here -->
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 VIT Marketplace. Built for students, by students.
+  </footer>
+
+  <!-- Product Modal -->
+  <div class="modal" id="productModal">
+    <div class="modal-content">
+      <h2 id="modalTitle"></h2>
+      <img id="modalImg" src="" alt="">
+      <p id="modalDesc"></p>
+      <p><strong>Price: ₹<span id="modalPrice"></span></strong></p>
+      <button class="btn-primary" onclick="buyNow()">Buy Now</button>
+    </div>
+  </div>
+
+  <!-- List Product Form -->
+  <div class="modal" id="listModal">
+    <div class="modal-content">
+      <h2>List a Product</h2>
+      <div class="form-group">
+        <input type="text" id="title" placeholder="Product Title">
+      </div>
+      <div class="form-group">
+        <input type="text" id="imgUrl" placeholder="Image URL">
+      </div>
+      <div class="form-group">
+        <textarea id="desc" rows="3" placeholder="Description"></textarea>
+      </div>
+      <div class="form-group">
+        <input type="number" id="price" placeholder="Price (in ₹)">
+      </div>
+      <button class="btn-primary" onclick="addProduct()">Submit</button>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="auth-form" id="authForm">
+    <div class="auth-box">
+      <h2>Login / Signup</h2>
+      <div class="form-group">
+        <input type="text" id="username" placeholder="Name / Email">
+      </div>
+      <div class="form-group">
+        <input type="password" id="password" placeholder="Password">
+      </div>
+      <button class="btn-primary" onclick="loginUser()">Login</button>
+    </div>
+  </div>
+
+  <script>
+    let products = JSON.parse(localStorage.getItem("products")) || [];
+    let currentUser = localStorage.getItem("user") || "Guest";
+
+    function updateWelcome() {
+      document.getElementById('welcomeUser').textContent = `Welcome, ${currentUser}`;
+    }
+
+    function openLogin() {
+      document.getElementById('authForm').style.display = 'flex';
+    }
+
+    function loginUser() {
+      const user = document.getElementById('username').value;
+      if (user.trim() !== "") {
+        currentUser = user;
+        localStorage.setItem("user", user);
+        updateWelcome();
+        document.getElementById('authForm').style.display = 'none';
+      }
+    }
+
+    function openListForm() {
+      if (currentUser === "Guest") {
+        alert("Please login to list a product.");
+        return;
+      }
+      document.getElementById('listModal').style.display = 'flex';
+    }
+
+    function addProduct() {
+      const title = document.getElementById('title').value;
+      const img = document.getElementById('imgUrl').value;
+      const desc = document.getElementById('desc').value;
+      const price = document.getElementById('price').value;
+
+      if (title && img && desc && price) {
+        const product = { title, img, desc, price };
+        products.push(product);
+        localStorage.setItem("products", JSON.stringify(products));
+        renderProducts();
+        document.getElementById('listModal').style.display = 'none';
+        clearForm();
+      } else {
+        alert("Fill all fields!");
+      }
+    }
+
+    function clearForm() {
+      document.getElementById('title').value = "";
+      document.getElementById('imgUrl').value = "";
+      document.getElementById('desc').value = "";
+      document.getElementById('price').value = "";
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productList');
+      container.innerHTML = '';
+      products.forEach((p, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${p.img}" />
+          <h3>${p.title}</h3>
+          <p>₹${p.price}</p>
+        `;
+        card.onclick = () => openModal(index);
+        container.appendChild(card);
+      });
+    }
+
+    function openModal(index) {
+      const p = products[index];
+      document.getElementById('modalTitle').textContent = p.title;
+      document.getElementById('modalImg').src = p.img;
+      document.getElementById('modalDesc').textContent = p.desc;
+      document.getElementById('modalPrice').textContent = p.price;
+      document.getElementById('productModal').style.display = 'flex';
+    }
+
+    function buyNow() {
+      alert("Thanks for buying! Seller will contact you shortly.");
+      document.getElementById('productModal').style.display = 'none';
+    }
+
+    window.onclick = e => {
+      if (e.target.classList.contains('modal') || e.target.classList.contains('auth-form')) {
+        e.target.style.display = 'none';
+      }
+    };
+
+    updateWelcome();
+    renderProducts();
+  </script>
+</body>
+</html>
